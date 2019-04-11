@@ -257,8 +257,8 @@
         </option>
         <option>
           <name>CCIncludePath2</name>
-          <state>D:\Google Drive\gitwork\STM8\TDS\STM8S_StdPeriph_Driver\inc</state>
-          <state>D:\Google Drive\gitwork\STM8\TDS\src</state>
+          <state>D:\Google Drive\gitwork\STM8_M590\TDS\STM8S_StdPeriph_Driver\inc</state>
+          <state>D:\Google Drive\gitwork\STM8_M590\TDS\src</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>

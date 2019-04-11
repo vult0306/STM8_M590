@@ -52,17 +52,14 @@
 #define IDX_READ_SMS 2
 #define IDX_SEND_SMS 3
 #define IDX_MAX 4
+#define IDX_GSM_MODE 5
 
 #define LEN_AT 2
 #define LEN_TEXT_MODE 9
+#define LEN_GSM_MODE 13
 #define LEN_READ_SMS 9
 #define LEN_SEND_SMS 43
 #define LEN_SDT_CMD 20
-
-#define LEN_FB_AT 2
-#define LEN_FB_TEXT_MODE 2
-#define LEN_FB_READ_SMS 2
-#define LEN_FB_SEND_SMS 2
 
 #define MAX_SMS 15
 #define CR 0x0d
@@ -72,8 +69,9 @@
 __IO uint32_t TimingDelay = 0;
 char AT[LEN_AT]="AT";
 char AT_TEXT_MODE[LEN_TEXT_MODE]="AT+CMGF=1";
+char AT_GSM_MODE[LEN_GSM_MODE]="AT+CSCS=\"GSM\"";
 char AT_READ_SMS[LEN_READ_SMS]="AT+CMGR=4";
-char AT_SDT[LEN_SDT_CMD]="AT+CMGS=+xxxxxxxxxxx";
+char AT_SDT[LEN_SDT_CMD]="AT+CMGS=+84975738366";
 char activated_code[LEN_ACTIVATE_CODE]="water";
 char AT_SEND_SMS[LEN_SEND_SMS]="Nuoc khong du an toan de uong, thay loi loc";
 char UART_RX[UART_BUFFER];
@@ -127,31 +125,43 @@ void main(void)
     /* UART1 configuration ------------------------------------------------------*/
     UART1_Config();
 
-    while(1){
-        delay(1000);
-        RX_count=0;
-        cmd_send(IDX_AT);
-    }
+    /* booting module sim -----------------------------------------*/
+    GPIO_WriteLow(LED_GPIO_PORT, (GPIO_Pin_TypeDef)LED_GPIO_PINS);
+    delay(3000);
+    GPIO_WriteHigh(LED_GPIO_PORT, (GPIO_Pin_TypeDef)LED_GPIO_PINS);
+    delay(10000);
+    
+    RX_count=0;
+    cmd_send(IDX_TEXT_MODE);
+    delay(2000);
+    RX_count=0;
+    cmd_send(IDX_GSM_MODE);
+    delay(2000);
+    RX_count=0;
+    // AT_READ_SMS[LEN_READ_SMS-1]=3+0x30+1;
     while (1)
     {
-        // delay(10000);
+        delay(2000);
+        RX_count=0;
+        cmd_send(IDX_SEND_SMS);
+        // cmd_send(IDX_READ_SMS);
         // readTDS();
         // delay(10000);
         // if tds value exceed the limitation and havent inform customer yet
         // if((tdsValue>TDS_LIMIT) && !warned){
-            cmd_send(IDX_TEXT_MODE);
-            delay(2000);
-            for(i=0;i<MAX_SMS;i++){
-                RX_count=0;
-                AT_READ_SMS[LEN_READ_SMS-1]=i+0x30+1;//convert to char, sms idx start from 1
-                cmd_send(IDX_READ_SMS);
-                if(RX_count>0x0F){//message existed
-                    if( get_customer_info() ){
+            // cmd_send(IDX_TEXT_MODE);
+            // delay(2000);
+            // for(i=0;i<MAX_SMS;i++){
+                // RX_count=0;
+                // AT_READ_SMS[LEN_READ_SMS-1]=i+0x30+1;//convert to char, sms idx start from 1
+                // cmd_send(IDX_READ_SMS);
+                // if(RX_count>0x0F){//message existed
+                    // if( get_customer_info() ){
                         cmd_send(IDX_SEND_SMS);
-                    }
-                }
-                delay(1000);
-            }
+                    // }
+                // }
+                // delay(1000);
+            // }
         // }
     }
 }
@@ -189,6 +199,11 @@ static void cmd_send(uint8_t cmd_idx){
                 putchar(*(AT_TEXT_MODE+i));
             eol();
         break;
+        case IDX_GSM_MODE:
+            for(i=0;i<LEN_GSM_MODE;i++)
+                putchar(*(AT_GSM_MODE+i));
+            eol();
+        break;
         case IDX_READ_SMS:
             for(i=0;i<LEN_READ_SMS;i++)
                 putchar(*(AT_READ_SMS+i));
@@ -201,7 +216,9 @@ static void cmd_send(uint8_t cmd_idx){
             delay(100);
             for(i=0;i<LEN_SEND_SMS;i++)
                 putchar(*(AT_SEND_SMS+i));
+            putchar(0x1A);
             eol();
+            delay(100);
         break;
     }
 }
@@ -384,9 +401,9 @@ static void eol (void)
   /* Loop until the end of transmission */
   while (UART1_GetFlagStatus(UART1_FLAG_TXE) == RESET);
   /* Write a character to the UART1 */
-  UART1_SendData8(LF);//\lf
+  // UART1_SendData8(LF);//\lf
   /* Loop until the end of transmission */
-  while (UART1_GetFlagStatus(UART1_FLAG_TXE) == RESET);
+  // while (UART1_GetFlagStatus(UART1_FLAG_TXE) == RESET);
   return;
 }
 /**
